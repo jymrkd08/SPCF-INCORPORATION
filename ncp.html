@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telemedicine NCP Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .modal-backdrop { backdrop-filter: blur(4px); }
+
+        /* Back Button Style */
+        .back-btn {
+            padding: 0.5rem 1.25rem;
+            background: rgba(37, 99, 235, 0.1); /* Subtle blue tint */
+            backdrop-filter: blur(10px);
+            color: #1e40af; /* Blue-800 text */
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+
+        .back-btn:hover {
+            background: rgba(37, 99, 235, 0.2);
+            transform: translateX(-5px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+    <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="back-btn">&larr; Back</a>
+                <h1 class="text-2xl font-bold text-blue-700">NCP Telemedicine Dashboard</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-slate-500">Active Patients: <strong class="text-blue-600">10</strong></span>
+                <button onclick="window.location.reload()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Refresh</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div id="patient-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Patient cards will be injected here -->
+        </div>
+    </main>
+
+    <div id="modal" class="fixed inset-0 bg-slate-900/50 hidden modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h2 id="modal-title" class="text-xl font-bold text-slate-800">Patient Details</h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <div id="modal-body" class="p-6 space-y-6">
+                <!-- Details injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const patients = [
+            { id: 1, name: "Jonathan Doe", age: 45, diagnosis: "Hypertension", status: "Stable", drugs: ["Amlodipine 5mg", "Losartan 50mg"], equip: ["Digital BP Monitor"], labs: ["Urinalysis", "Lipid Profile"] },
+            { id: 2, name: "Clarissa Harlowe", age: 62, diagnosis: "Type 2 Diabetes", status: "Critical", drugs: ["Metformin 500mg", "Insulin"], equip: ["Glucometer"], labs: ["HbA1c", "Urinalysis"] },
+            { id: 3, name: "Robert Chen", age: 31, diagnosis: "Acute Gastritis", status: "Stable", drugs: ["Omeprazole 20mg"], equip: ["N/A"], labs: ["Fecalysis", "CBC"] },
+            { id: 4, name: "Sophia Martinez", age: 28, diagnosis: "Post-Viral Fatigue", status: "Monitoring", drugs: ["Multivitamins"], equip: ["Thermometer"], labs: ["CBC", "Urinalysis"] },
+            { id: 5, name: "Marcus Vance Jr.", age: 55, diagnosis: "Hyperlipidemia", status: "Stable", drugs: ["Simvastatin 20mg"], equip: ["N/A"], labs: ["Lipid Profile", "Fecalysis"] },
+            { id: 6, name: "Evelyn Sterling", age: 39, diagnosis: "Asthma", status: "Stable", drugs: ["Salbutamol Inhaler"], equip: ["Nebulizer"], labs: ["Spirometry"] },
+            { id: 7, name: "David Kim", age: 70, diagnosis: "Osteoarthritis", status: "Chronic", drugs: ["Ibuprofen", "Calcium"], equip: ["Walker"], labs: ["X-Ray"] },
+            { id: 8, name: "Amara Okafor", age: 22, diagnosis: "UTI", status: "Stable", drugs: ["Ciprofloxacin 500mg"], equip: ["N/A"], labs: ["Urinalysis", "Fecalysis"] },
+            { id: 9, name: "Liam O'Connor", age: 48, diagnosis: "Anxiety Disorder", status: "Stable", drugs: ["Sertraline 50mg"], equip: ["N/A"], labs: ["Blood Chemistry"] },
+            { id: 10, name: "Isabella Rossi", age: 34, diagnosis: "Migraine", status: "Stable", drugs: ["Sumatriptan"], equip: ["Ice pack"], labs: ["Urinalysis"] }
+        ];
+
+        function renderPatients() {
+            const grid = document.getElementById('patient-grid');
+            grid.innerHTML = patients.map(p => `
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-bold text-lg text-slate-800">${p.name}</h3>
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${p.status === 'Critical' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${p.status}</span>
+                    </div>
+                    <p class="text-slate-600 text-sm mb-2">Age: ${p.age}</p>
+                    <p class="text-blue-600 text-sm font-medium mb-4">${p.diagnosis}</p>
+                    <button onclick="viewPatient(${p.id})" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 py-2 rounded-lg transition text-sm">View Care Plan</button>
+                </div>
+            `).join('');
+        }
+
+        function viewPatient(id) {
+            const p = patients.find(patient => patient.id === id);
+            const modal = document.getElementById('modal');
+            const body = document.getElementById('modal-body');
+            
+            document.getElementById('modal-title').innerText = `Care Plan: ${p.name}`;
+            body.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-slate-700 mb-2">Medication Orders</h4>
+                        <ul class="list-disc pl-5 text-slate-600 text-sm">${p.drugs.map(d => `<li>${d}</li>`).join('')}</ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-700 mb-2">Equipment Needed</h4>
+                        <ul class="list-disc pl-5 text-slate-600 text-sm">${p.equip.map(e => `<li>${e}</li>`).join('')}</ul>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-700 mb-2">Clinical Diagnostics</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${p.labs.map(l => `<div class="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-sm font-medium border border-blue-100">${l}</div>`).join('')}
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        window.onload = renderPatients;
+    </script>
+</body>
+</html>
